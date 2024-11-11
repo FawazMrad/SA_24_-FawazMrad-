@@ -44,6 +44,7 @@ public class Game {
 
         // Step 4: Initialize the grid with the entered configuration
         this.grid = new Grid(rows, cols, config);
+        this.firstGrid=this.grid.deepCopyFirst();
         System.out.println("Grid initialized successfully!");
     }
 
@@ -71,6 +72,7 @@ public class Game {
             previousGridState = newGridState;  // Update previous state to current
         }
 
+        this.result();
 
     }
 
@@ -148,7 +150,8 @@ public class Game {
                 }
             }
         }
-        this.result();
+
+
     }
 
     private String getGridHash() {
@@ -165,9 +168,10 @@ public class Game {
 
     public void revertToInitialState() {
         this.numberOfMoves+=1;
-        this.grid = this.firstGrid.deepCopyFirst(); // Deep copy to avoid direct reference issues
+        this.grid = this.firstGrid.deepCopyFirst();
         this.gridHistory.clear();
-        this.gridHistory.add(this.firstGrid.deepCopyFirst()); // Add initial grid to history
+        this.gridHistory.add(this.firstGrid.deepCopyFirst());
+
     }
 
 //    public String[][] gridTo2DArray(Grid grid) {
@@ -215,7 +219,7 @@ public class Game {
             System.out.println();
             System.exit(0);
         }
-        if (this.isFinished() == true) {
+        if (this.isFinished()) {
             System.out.println("You Win!! and your number of moves is: " + this.numberOfMoves);
             this.printCurrentGrid();
             System.out.println();
@@ -234,6 +238,7 @@ public class Game {
     public void printCurrentGrid() {
         System.out.println("NumberOfMoves: " + this.numberOfMoves);
         grid.printGrid(this.grid);
+        System.out.println("------------------------------");
     }
 }
 
