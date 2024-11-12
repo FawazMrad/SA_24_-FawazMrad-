@@ -1,12 +1,11 @@
 import java.util.*;
 
 public class Game {
-    private final LinkedList<Grid> gridHistory;
+    private  LinkedList<Grid> gridHistory;
     private Grid grid;
     private String previousGridState;
     private Grid firstGrid;
     private int numberOfMoves;
-
     public Game(Grid initialGrid) {
         this.grid = initialGrid;
         this.numberOfMoves = 0;
@@ -14,9 +13,10 @@ public class Game {
         this.gridHistory = new LinkedList<>();
         this.gridHistory.add(this.grid);
         this.previousGridState = getGridHash();
-
-    }
-
+            }
+            public LinkedList<Grid> getGridHistory(){
+        return this.gridHistory;
+            }
     public void initGame() {
         Scanner scanner = new Scanner(System.in);
 
@@ -64,27 +64,23 @@ public class Game {
             System.out.println("Current Grid State:");
             currentGame.printCurrentGrid(true);
             System.out.println("------------------------------");
-
-            // Check if the current state is a solution
-            if (currentGame.isFinished()) {
-                System.out.println("\n*** Solution found in " + currentGame.numberOfMoves + " moves! ***");
-                currentGame.printCurrentGrid(true);
-                return;
-            }
-
-            // Explore each direction
             for (String direction : new String[]{"up", "down", "left", "right"}) {
                 System.out.println("Current Moves In this Depth : " + currentGame.numberOfMoves);
                 Game newGameState = new Game(currentGame.grid.deepCopy());
-                newGameState.numberOfMoves = currentGame.numberOfMoves + 1;
                 newGameState.gridHistory.addAll(currentGame.gridHistory);
 
-
-                newGameState.makeMove(direction);
+                newGameState.makeMove(direction,true);
                 String newGridHash = newGameState.getGridHash();
-
-
                 if (!visitedStates.contains(newGridHash)) {
+                    if (newGameState.isFinished()) {
+                        currentGame.numberOfMoves++;
+                        System.out.println("Attempting move: " +direction);
+                        System.out.println("\nSolution found in depth " + currentGame.numberOfMoves + " !");
+                        newGameState.printCurrentGrid(true);
+                        System.exit(0);
+                        return;
+                    }
+                    newGameState.numberOfMoves = currentGame.numberOfMoves + 1;
                     visitedStates.add(newGridHash);
                     stack.push(newGameState);
                     System.out.println("Attempting move: " + direction);
@@ -114,23 +110,24 @@ public class Game {
             System.out.println("Current Grid State:");
             currentGame.printCurrentGrid(true);
             System.out.println("------------------------------");
-
-            // Check if the current state is a solution
-            if (currentGame.isFinished()) {
-                System.out.println("---------------------------------------------------------------------");
-                System.out.println("\n*** Solution found in " + currentGame.numberOfMoves + " moves! ***");
-                currentGame.printCurrentGrid(true);
-                return;
-            }
             for (String direction : new String[]{"up", "down", "left", "right"}) {
                 Game newGameState = new Game(currentGame.grid.deepCopy());
-                newGameState.numberOfMoves = currentGame.numberOfMoves + 1;
                 newGameState.gridHistory.addAll(currentGame.gridHistory);
 
-                newGameState.makeMove(direction);
+                newGameState.makeMove(direction,true);
+                if (newGameState.isFinished()) {
+                    currentGame.numberOfMoves ++;
+                    System.out.println("---------------------------------------------------------------------");
+                    System.out.println("Attempting move: " +direction);
+                    System.out.println("\n Solution found in depth" + currentGame.numberOfMoves + " !");
+                    newGameState.printCurrentGrid(true);
+                    System.exit(0);
+                    return;
+                }
                 String newGridHash = newGameState.getGridHash();
 
                 if (!visitedStates.contains(newGridHash)) {
+                    newGameState.numberOfMoves = currentGame.numberOfMoves + 1;
                     visitedStates.add(newGridHash);
                     queue.add(newGameState);
                     System.out.println("Attempting move: " + direction);
@@ -154,7 +151,10 @@ public class Game {
         return cell instanceof ColoredCell && cell.isMovable() && cell.getNeighbor(direction) != null && cell.getNeighbor(direction).isMovable();
     }
 
-    public void makeMove(String direction) {
+    public void makeMove(String direction){
+          makeMove(direction,false);
+    }
+    public void makeMove(String direction,boolean isSystemPlays) {
         this.numberOfMoves++;
         gridHistory.add(this.grid.deepCopy());
         while (true) {
@@ -168,9 +168,9 @@ public class Game {
             }
             previousGridState = newGridState;
         }
-
-        this.result();
-
+        if(!isSystemPlays) {
+            this.result();
+        }
     }
 
     public void printGridHistory() {
@@ -310,7 +310,7 @@ public class Game {
 
 
     public void result() {
-        if (this.numberOfMoves >= 100000000) {
+        if (this.numberOfMoves >= 100000) {
             System.out.println("You loose , you exceeded the allowed number of moves and your number of moves is: " + this.numberOfMoves);
             this.printCurrentGrid();
             System.out.println();
@@ -320,7 +320,7 @@ public class Game {
             System.out.println("You Win!! and your number of moves is: " + this.numberOfMoves);
             this.printCurrentGrid();
             System.out.println();
-            System.exit(0);
+               System.exit(0);
         }
 
     }

@@ -7,7 +7,7 @@ public class Grid {
     private Grid currentGrid;
     private int rows, cols;
     private Map<String, Cell> cells;
-    private String direction;
+
 
     public Grid(int rows, int cols, String[][] config) {
         this.config = config;
