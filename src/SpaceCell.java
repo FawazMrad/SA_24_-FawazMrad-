@@ -20,6 +20,9 @@ public class SpaceCell implements Cell {
         this.col = col;
     }
 
+    public Map<String, Cell>  getNeighbors(){
+        return this.neighbors;
+    }
 //    public Cell clone() {
 //        return new SpaceCell(this.row, this.col);
 //    }

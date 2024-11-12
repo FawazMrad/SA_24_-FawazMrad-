@@ -14,6 +14,7 @@ public class Game {
         this.gridHistory = new LinkedList<>();
         this.gridHistory.add(this.grid);
         this.previousGridState = getGridHash();
+
     }
 
     public void initGame() {
@@ -59,7 +60,7 @@ public class Game {
 
         while (!stack.isEmpty()) {
             Game currentGame = stack.pop();
-            System.out.println("Current Depth (Moves): " + currentGame.numberOfMoves);
+            System.out.println("Current Depth: " + currentGame.numberOfMoves);
             System.out.println("Current Grid State:");
             currentGame.printCurrentGrid(true);
             System.out.println("------------------------------");
@@ -73,7 +74,7 @@ public class Game {
 
             // Explore each direction
             for (String direction : new String[]{"up", "down", "left", "right"}) {
-                System.out.println("Current Depth : " + currentGame.numberOfMoves);
+                System.out.println("Current Moves In this Depth : " + currentGame.numberOfMoves);
                 Game newGameState = new Game(currentGame.grid.deepCopy());
                 newGameState.numberOfMoves = currentGame.numberOfMoves + 1;
                 newGameState.gridHistory.addAll(currentGame.gridHistory);
@@ -86,7 +87,6 @@ public class Game {
                 if (!visitedStates.contains(newGridHash)) {
                     visitedStates.add(newGridHash);
                     stack.push(newGameState);
-
                     System.out.println("Attempting move: " + direction);
                     newGameState.printCurrentGrid(true);
                     System.out.println("------------------------------");
@@ -98,6 +98,53 @@ public class Game {
 
         System.out.println("No solution found with DFS.");
     }
+
+    public void solveWithBFS() {
+        Queue<Game> queue = new LinkedList<>();
+        Set<String> visitedStates = new HashSet<>();
+
+        queue.add(this);
+        visitedStates.add(getGridHash());
+
+        System.out.println("Starting BFS to solve the game...\n");
+
+        while (!queue.isEmpty()) {
+            Game currentGame = queue.poll();
+            System.out.println("Current Depth: " + currentGame.numberOfMoves);
+            System.out.println("Current Grid State:");
+            currentGame.printCurrentGrid(true);
+            System.out.println("------------------------------");
+
+            // Check if the current state is a solution
+            if (currentGame.isFinished()) {
+                System.out.println("---------------------------------------------------------------------");
+                System.out.println("\n*** Solution found in " + currentGame.numberOfMoves + " moves! ***");
+                currentGame.printCurrentGrid(true);
+                return;
+            }
+            for (String direction : new String[]{"up", "down", "left", "right"}) {
+                Game newGameState = new Game(currentGame.grid.deepCopy());
+                newGameState.numberOfMoves = currentGame.numberOfMoves + 1;
+                newGameState.gridHistory.addAll(currentGame.gridHistory);
+
+                newGameState.makeMove(direction);
+                String newGridHash = newGameState.getGridHash();
+
+                if (!visitedStates.contains(newGridHash)) {
+                    visitedStates.add(newGridHash);
+                    queue.add(newGameState);
+                    System.out.println("Attempting move: " + direction);
+                    newGameState.printCurrentGrid(true);
+                    System.out.println("------------------------------");
+                } else {
+                    System.out.println("Move " + direction + " leads to a previously visited state. Skipping.");
+                }
+            }
+        }
+
+        System.out.println("No solution found with BFS.");
+    }
+
 
     public Grid getGrid() {
         return this.grid;
@@ -119,7 +166,7 @@ public class Game {
 
                 break;
             }
-            previousGridState = newGridState;  // Update previous state to current
+            previousGridState = newGridState;
         }
 
         this.result();
@@ -219,9 +266,9 @@ public class Game {
     public void revertToInitialState() {
         this.numberOfMoves += 1;
         this.grid = this.firstGrid.deepCopyFirst();
+        this.grid.linkNeighbors();
         this.gridHistory.clear();
-        this.gridHistory.add(this.firstGrid.deepCopyFirst());
-
+        this.gridHistory.add(this.grid);
     }
 
 //    public String[][] gridTo2DArray(Grid grid) {

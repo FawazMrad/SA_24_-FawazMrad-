@@ -6,6 +6,7 @@ public interface Cell {
     boolean isMovable();  // Indicates if the cell can be moved into by other cells
     void setNeighbor(String direction, Cell neighbor);  // Set neighbor cells
     Cell getNeighbor(String direction);// Get neighbor cell in a specific direction
+    public Map<String, Cell>  getNeighbors();// Get neighbors cells
     public String getPosition();
     public void setPosition(int row, int col);
     public int getRow();

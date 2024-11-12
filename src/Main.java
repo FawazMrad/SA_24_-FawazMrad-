@@ -25,8 +25,11 @@ public class Main {
             System.out.println("Solving the game using DFS...");
             game.solveWithDFS();
         } else if (choice == 3) {
-            System.out.println("BFS solving is under development.");
-            // Add BFS solving code here when ready
+            Grid grid = new Grid(0, 0, new String[0][0]);
+            Game game = new Game(grid);
+            game.initGame();
+            System.out.println("Solving the game using BFS...");
+            game.solveWithBFS();
         } else {
             System.out.println("Invalid choice. Please restart and select a valid option.");
         }

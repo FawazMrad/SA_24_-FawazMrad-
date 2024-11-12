@@ -14,6 +14,9 @@ public class ColoredCell implements Cell {
         this.col = col;
     }
 
+   public Map<String, Cell>  getNeighbors(){
+        return this.neighbors;
+    }
     public ColoredCell deepCopy() {
         return new ColoredCell(this.color, this.row, this.col);
     }

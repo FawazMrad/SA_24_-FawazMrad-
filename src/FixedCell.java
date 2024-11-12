@@ -14,6 +14,9 @@ public class FixedCell implements Cell {
 //    public Cell clone() {
 //        return new FixedCell(this.row, this.col);
 //    }
+public Map<String, Cell>  getNeighbors(){
+    return this.neighbors;
+}
 
     public void setPosition(int row, int col) {
         this.row = row;
