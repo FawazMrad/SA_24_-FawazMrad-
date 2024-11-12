@@ -44,10 +44,60 @@ public class Game {
 
         // Step 4: Initialize the grid with the entered configuration
         this.grid = new Grid(rows, cols, config);
-        this.firstGrid=this.grid.deepCopyFirst();
+        this.firstGrid = this.grid.deepCopyFirst();
         System.out.println("Grid initialized successfully!");
     }
 
+    public void solveWithDFS() {
+        Stack<Game> stack = new Stack<>();
+        Set<String> visitedStates = new HashSet<>();
+
+        stack.push(this);
+        visitedStates.add(getGridHash());
+
+        System.out.println("Starting DFS to solve the game...\n");
+
+        while (!stack.isEmpty()) {
+            Game currentGame = stack.pop();
+            System.out.println("Current Depth (Moves): " + currentGame.numberOfMoves);
+            System.out.println("Current Grid State:");
+            currentGame.printCurrentGrid(true);
+            System.out.println("------------------------------");
+
+            // Check if the current state is a solution
+            if (currentGame.isFinished()) {
+                System.out.println("\n*** Solution found in " + currentGame.numberOfMoves + " moves! ***");
+                currentGame.printCurrentGrid(true);
+                return;
+            }
+
+            // Explore each direction
+            for (String direction : new String[]{"up", "down", "left", "right"}) {
+                System.out.println("Current Depth : " + currentGame.numberOfMoves);
+                Game newGameState = new Game(currentGame.grid.deepCopy());
+                newGameState.numberOfMoves = currentGame.numberOfMoves + 1;
+                newGameState.gridHistory.addAll(currentGame.gridHistory);
+
+
+                newGameState.makeMove(direction);
+                String newGridHash = newGameState.getGridHash();
+
+
+                if (!visitedStates.contains(newGridHash)) {
+                    visitedStates.add(newGridHash);
+                    stack.push(newGameState);
+
+                    System.out.println("Attempting move: " + direction);
+                    newGameState.printCurrentGrid(true);
+                    System.out.println("------------------------------");
+                } else {
+                    System.out.println("Move " + direction + " leads to a previously visited state. Skipping.");
+                }
+            }
+        }
+
+        System.out.println("No solution found with DFS.");
+    }
 
     public Grid getGrid() {
         return this.grid;
@@ -167,7 +217,7 @@ public class Game {
 
 
     public void revertToInitialState() {
-        this.numberOfMoves+=1;
+        this.numberOfMoves += 1;
         this.grid = this.firstGrid.deepCopyFirst();
         this.gridHistory.clear();
         this.gridHistory.add(this.firstGrid.deepCopyFirst());
@@ -213,7 +263,7 @@ public class Game {
 
 
     public void result() {
-        if (this.numberOfMoves >= 100) {
+        if (this.numberOfMoves >= 100000000) {
             System.out.println("You loose , you exceeded the allowed number of moves and your number of moves is: " + this.numberOfMoves);
             this.printCurrentGrid();
             System.out.println();
@@ -235,10 +285,16 @@ public class Game {
         }
     }
 
-    public void printCurrentGrid() {
-        System.out.println("NumberOfMoves: " + this.numberOfMoves);
+    public void printCurrentGrid(boolean isSystemPlays) {
+        if (!isSystemPlays) {
+            System.out.println("NumberOfMoves: " + this.numberOfMoves);
+        }
         grid.printGrid(this.grid);
         System.out.println("------------------------------");
+    }
+
+    public void printCurrentGrid() {
+        printCurrentGrid(false);
     }
 }
 

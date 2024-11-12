@@ -19,8 +19,11 @@ public class Main {
         if (choice == 1) {
             initTheGame(); // Proceed with the game for the user to solve
         } else if (choice == 2) {
-            System.out.println("DFS solving is under development.");
-            // Add DFS solving code here when ready
+            Grid grid = new Grid(0, 0, new String[0][0]); // Initialize an empty grid
+            Game game = new Game(grid);
+            game.initGame();
+            System.out.println("Solving the game using DFS...");
+            game.solveWithDFS();
         } else if (choice == 3) {
             System.out.println("BFS solving is under development.");
             // Add BFS solving code here when ready
@@ -90,9 +93,7 @@ public class Main {
 
         // Show the frame
         frame.setVisible(true);
-
-        // Initial grid printout (after user input)
         game.printCurrentGrid();
-        //System.out.println("Press arrow keys to move, 'U' to undo, or 'R' to reset.");
+
     }
 }
