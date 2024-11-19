@@ -1,7 +1,11 @@
 import javax.swing.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.HashSet;
 import java.util.Scanner;
+import java.util.Set;
+import java.util.Stack;
+
 
 public class Main {
     public static void main(String[] args) {
@@ -14,6 +18,8 @@ public class Main {
         System.out.println("Press 1 if you want to solve the game yourself.");
         System.out.println("Press 2 if you want the system to solve the game by DFS.");
         System.out.println("Press 3 if you want the system to solve the game by BFS.");
+        System.out.println("Press 4 if you want the system to solve the game by RecDFS.");
+        System.out.println("Press 5 if you want the system to solve the game by HillClimbing.");
         int choice = scanner.nextInt();
 
         if (choice == 1) {
@@ -30,6 +36,21 @@ public class Main {
             game.initGame();
             System.out.println("Solving the game using BFS...");
             game.solveWithBFS();
+        } else if (choice == 4) {
+            Grid grid = new Grid(0, 0, new String[0][0]);
+            Game game = new Game(grid);
+            game.initGame();
+            System.out.println("Solving the game using RecDFS...");
+            Stack<Game> stack = new Stack<>();
+            Set<String> visitedStates = new HashSet<>();
+            game.solveWithRecDFS(stack, visitedStates, 0);
+        }
+        if (choice == 5) {
+            System.out.println("Solving the game using HillClimbing...");
+            Grid grid = new Grid(0, 0, new String[0][0]);
+            Game game = new Game(grid);
+            game.initGame();
+            game.solveWithHillClimbing();
         } else {
             System.out.println("Invalid choice. Please restart and select a valid option.");
         }

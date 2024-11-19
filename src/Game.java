@@ -1,11 +1,12 @@
 import java.util.*;
 
 public class Game {
-    private  LinkedList<Grid> gridHistory;
+    private LinkedList<Grid> gridHistory;
     private Grid grid;
     private String previousGridState;
     private Grid firstGrid;
     private int numberOfMoves;
+
     public Game(Grid initialGrid) {
         this.grid = initialGrid;
         this.numberOfMoves = 0;
@@ -13,10 +14,12 @@ public class Game {
         this.gridHistory = new LinkedList<>();
         this.gridHistory.add(this.grid);
         this.previousGridState = getGridHash();
-            }
-            public LinkedList<Grid> getGridHistory(){
+    }
+
+    public LinkedList<Grid> getGridHistory() {
         return this.gridHistory;
-            }
+    }
+
     public void initGame() {
         Scanner scanner = new Scanner(System.in);
 
@@ -69,12 +72,12 @@ public class Game {
                 Game newGameState = new Game(currentGame.grid.deepCopy());
                 newGameState.gridHistory.addAll(currentGame.gridHistory);
 
-                newGameState.makeMove(direction,true);
+                newGameState.makeMove(direction, true);
                 String newGridHash = newGameState.getGridHash();
                 if (!visitedStates.contains(newGridHash)) {
                     if (newGameState.isFinished()) {
                         currentGame.numberOfMoves++;
-                        System.out.println("Attempting move: " +direction);
+                        System.out.println("Attempting move: " + direction);
                         System.out.println("\nSolution found in depth " + currentGame.numberOfMoves + " !");
                         newGameState.printCurrentGrid(true);
                         System.exit(0);
@@ -93,6 +96,54 @@ public class Game {
         }
 
         System.out.println("No solution found with DFS.");
+    }
+
+    public void solveWithRecDFS(Stack<Game> stack, Set<String> visitedStates, int counter) {
+        if (counter == 0) {
+            stack.push(this);
+            visitedStates.add(getGridHash());
+            counter++;
+        }
+
+        if (stack.isEmpty()) {
+            System.out.println("No solution found with RecDFS.");
+            System.exit(0);
+        }
+
+        Game currentGame = stack.pop();
+        System.out.println("Current Depth: " + currentGame.numberOfMoves);
+        System.out.println("Current Grid State:");
+        currentGame.printCurrentGrid(true);
+        System.out.println("------------------------------");
+
+        for (String direction : new String[]{"up", "down", "left", "right"}) {
+            System.out.println("Current Moves In this Depth: " + currentGame.numberOfMoves);
+            Game newGameState = new Game(currentGame.grid.deepCopy());
+            newGameState.gridHistory.addAll(currentGame.gridHistory);
+
+            newGameState.makeMove(direction, true);
+            String newGridHash = newGameState.getGridHash();
+
+            if (!visitedStates.contains(newGridHash)) {
+                if (newGameState.isFinished()) {
+                    System.out.println("Attempting move: " + direction);
+                    System.out.println("\nSolution found in depth " + (currentGame.numberOfMoves + 1) + "!");
+                    newGameState.printCurrentGrid(true);
+                    System.exit(0);
+                    return;
+                }
+                newGameState.numberOfMoves = currentGame.numberOfMoves + 1;
+                visitedStates.add(newGridHash);
+                stack.push(newGameState);
+                System.out.println("Attempting move: " + direction);
+                newGameState.printCurrentGrid(true);
+                System.out.println("------------------------------");
+            } else {
+                System.out.println("Move " + direction + " leads to a previously visited state. Skipping.");
+            }
+        }
+
+        solveWithRecDFS(stack, visitedStates, counter);
     }
 
     public void solveWithBFS() {
@@ -114,11 +165,11 @@ public class Game {
                 Game newGameState = new Game(currentGame.grid.deepCopy());
                 newGameState.gridHistory.addAll(currentGame.gridHistory);
 
-                newGameState.makeMove(direction,true);
+                newGameState.makeMove(direction, true);
                 if (newGameState.isFinished()) {
-                    currentGame.numberOfMoves ++;
+                    currentGame.numberOfMoves++;
                     System.out.println("---------------------------------------------------------------------");
-                    System.out.println("Attempting move: " +direction);
+                    System.out.println("Attempting move: " + direction);
                     System.out.println("\n Solution found in depth" + currentGame.numberOfMoves + " !");
                     newGameState.printCurrentGrid(true);
                     System.exit(0);
@@ -142,19 +193,46 @@ public class Game {
         System.out.println("No solution found with BFS.");
     }
 
+    public void solveWithHillClimbing() {
+        System.out.println("Starting Hill Climbing...");
+        while (true) {
+            String bestMove = selectBestMove();
+            if (bestMove == null) {
+                System.out.println("No better moves available. Stopping.");
+                break;
+            }
+            String currentGridState = getGridHash();
+            System.out.println("Performing move: " + bestMove);
+            this.makeMove(bestMove);
+            this.printCurrentGrid();
+            String newGridState = getGridHash();
+            if (newGridState.equals(currentGridState)) {
+                break;
+            }
+            if (isFinished()) {
+                System.out.println("Solution found!");
+                this.printCurrentGrid();
+                return;
+            }
+        }
+        System.out.println("No solution found with Hill Climbing.");
+    }
+
 
     public Grid getGrid() {
         return this.grid;
     }
 
+
     public boolean canMove(String direction, Cell cell) {
         return cell instanceof ColoredCell && cell.isMovable() && cell.getNeighbor(direction) != null && cell.getNeighbor(direction).isMovable();
     }
 
-    public void makeMove(String direction){
-          makeMove(direction,false);
+    public void makeMove(String direction) {
+        makeMove(direction, false);
     }
-    public void makeMove(String direction,boolean isSystemPlays) {
+
+    public void makeMove(String direction, boolean isSystemPlays) {
         this.numberOfMoves++;
         gridHistory.add(this.grid.deepCopy());
         while (true) {
@@ -168,10 +246,11 @@ public class Game {
             }
             previousGridState = newGridState;
         }
-        if(!isSystemPlays) {
+        if (!isSystemPlays) {
             this.result();
         }
     }
+
 
     public void printGridHistory() {
         System.out.println(this.gridHistory.toString());
@@ -320,7 +399,7 @@ public class Game {
             System.out.println("You Win!! and your number of moves is: " + this.numberOfMoves);
             this.printCurrentGrid();
             System.out.println();
-               System.exit(0);
+            System.exit(0);
         }
 
     }
@@ -343,6 +422,31 @@ public class Game {
     public void printCurrentGrid() {
         printCurrentGrid(false);
     }
+
+    public String selectBestMove() {
+        String[] directions = {"up", "down", "left", "right"};
+        String bestDirection = null;
+        int minColoredCells = Integer.MAX_VALUE;
+
+        for (String direction : directions) {
+            Game simulatedGame = this.simulateMove(direction);
+            int coloredCells = simulatedGame.grid.countColoredCells();
+            if (coloredCells < minColoredCells) {
+                minColoredCells = coloredCells;
+                bestDirection = direction;
+            }
+        }
+        return bestDirection;
+    }
+
+    public Game simulateMove(String direction) {
+        Grid copiedGrid = this.grid.deepCopy();
+        Game simulatedGame = new Game(copiedGrid);
+        simulatedGame.makeMove(direction);
+        return simulatedGame;
+    }
+
+
 }
 
 

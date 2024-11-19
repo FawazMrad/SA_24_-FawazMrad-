@@ -104,4 +104,16 @@ public class Grid {
             System.out.println();
         }
     }
+
+    public int countColoredCells() {
+        int coloredCellCount = 0;
+        for (Cell cell : getCells().values()) {
+            if (cell instanceof ColoredCell) {
+                coloredCellCount++;
+            }
+        }
+        return coloredCellCount;
+    }
+
+
 }
