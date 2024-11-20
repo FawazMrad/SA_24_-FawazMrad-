@@ -15,11 +15,13 @@ public class Main {
     public static void displaySolveOptions() {
         Scanner scanner = new Scanner(System.in);
         System.out.println("Choose an option:");
-        System.out.println("Press 1 if you want to solve the game yourself.");
+        System.out.println("Press 1 if you want to solve the game by Yourself.");
         System.out.println("Press 2 if you want the system to solve the game by DFS.");
         System.out.println("Press 3 if you want the system to solve the game by BFS.");
         System.out.println("Press 4 if you want the system to solve the game by RecDFS.");
         System.out.println("Press 5 if you want the system to solve the game by HillClimbing.");
+        System.out.println("Press 6 if you want the system to solve the game by UCS.");
+        System.out.println("Press 7 if you want the system to solve the game by A*.");
         int choice = scanner.nextInt();
 
         if (choice == 1) {
@@ -51,6 +53,18 @@ public class Main {
             Game game = new Game(grid);
             game.initGame();
             game.solveWithHillClimbing();
+        } if (choice == 6) {
+            System.out.println("Solving the game using UCS...");
+            Grid grid = new Grid(0, 0, new String[0][0]);
+            Game game = new Game(grid);
+            game.initGame();
+            game.solveWithUCS();
+        } if (choice == 7) {
+            System.out.println("Solving the game using A*...");
+            Grid grid = new Grid(0, 0, new String[0][0]);
+            Game game = new Game(grid);
+            game.initGame();
+            game.solveWithAStar();
         } else {
             System.out.println("Invalid choice. Please restart and select a valid option.");
         }

@@ -6,6 +6,8 @@ public class Game {
     private String previousGridState;
     private Grid firstGrid;
     private int numberOfMoves;
+    private int estimatedCost;
+
 
     public Game(Grid initialGrid) {
         this.grid = initialGrid;
@@ -16,9 +18,17 @@ public class Game {
         this.previousGridState = getGridHash();
     }
 
-    public LinkedList<Grid> getGridHistory() {
-        return this.gridHistory;
+    public int getEstimatedCost() {
+        return this.estimatedCost;
     }
+
+    public void setEstimatedCost(int cost) {
+        this.estimatedCost = cost;
+    }
+
+//    public LinkedList<Grid> getGridHistory() {
+//        return this.gridHistory;
+//    }
 
     public void initGame() {
         Scanner scanner = new Scanner(System.in);
@@ -218,6 +228,105 @@ public class Game {
         System.out.println("No solution found with Hill Climbing.");
     }
 
+    public void solveWithUCS() {
+        PriorityQueue<Game> priorityQueue = new PriorityQueue<>(Comparator.comparingInt(g -> g.numberOfMoves));
+        Set<String> visitedStates = new HashSet<>();
+
+        priorityQueue.add(this);
+        visitedStates.add(this.getGridHash());
+
+        System.out.println("Starting Uniform Cost Search...");
+
+        while (!priorityQueue.isEmpty()) {
+            Game currentGame = priorityQueue.poll();
+
+            System.out.println("Exploring state with cost: " + currentGame.numberOfMoves);
+            currentGame.printCurrentGrid();
+
+            for (String direction : new String[]{"up", "down", "left", "right"}) {
+                Game newGameState = currentGame.simulateMove(direction);
+
+                // Correctly set the cost for the new state
+                newGameState.numberOfMoves = currentGame.numberOfMoves + 1;
+
+                if (newGameState.isFinished()) {
+                    System.out.println("Attempting move: " + direction);
+                    System.out.println("\nSolution found in " + newGameState.numberOfMoves + " moves!");
+                    newGameState.printCurrentGrid(true);
+                    return; // End the search
+                }
+
+                String newGridHash = newGameState.getGridHash();
+
+                if (!visitedStates.contains(newGridHash)) {
+                    visitedStates.add(newGridHash);
+                    priorityQueue.add(newGameState);
+                    System.out.println("Queued new state with move: " + direction);
+                }
+            }
+        }
+
+        System.out.println("No solution found with Uniform Cost Search.");
+    }
+
+    public void solveWithAStar() {
+
+//        PriorityQueue<Game> priorityQueue = new PriorityQueue<>(Comparator.comparingInt(g -> g.getEstimatedCost()));
+
+        Comparator<Game> comparator = (g1, g2) -> {
+            int f1 = g1.getEstimatedCost();
+            int f2 = g2.getEstimatedCost();
+            if (f1 != f2) {
+                return Integer.compare(f1, f2);
+            }
+            return Integer.compare(g2.grid.countColoredCells(), g1.grid.countColoredCells());
+        };
+
+        PriorityQueue<Game> priorityQueue = new PriorityQueue<>(comparator);
+        Set<String> visitedStates = new HashSet<>();
+
+        this.setEstimatedCost(this.numberOfMoves + this.grid.countColoredCells());
+        priorityQueue.add(this);
+        visitedStates.add(this.getGridHash());
+
+        System.out.println("Starting A* Search with tie-breaking...");
+
+        while (!priorityQueue.isEmpty()) {
+            Game currentGame = priorityQueue.poll();
+
+            System.out.println("Exploring state with cost: " + currentGame.numberOfMoves + ", heuristic: " + currentGame.grid.countColoredCells() + ", total: " + currentGame.getEstimatedCost());
+            currentGame.printCurrentGrid();
+
+            if (currentGame.isFinished()) {
+                System.out.println("\n*** Solution found in " + currentGame.numberOfMoves + " moves! ***");
+                currentGame.printCurrentGrid(true);
+                return;
+            }
+
+            for (String direction : new String[]{"up", "down", "left", "right"}) {
+                Game newGameState = currentGame.simulateMove(direction);
+
+                newGameState.numberOfMoves = currentGame.numberOfMoves + 1;
+
+                String newGridHash = newGameState.getGridHash();
+
+                if (!visitedStates.contains(newGridHash)) {
+                    visitedStates.add(newGridHash);
+
+                    int heuristic = newGameState.grid.countColoredCells();
+                    newGameState.setEstimatedCost(newGameState.numberOfMoves + heuristic);
+
+                    priorityQueue.add(newGameState);
+
+                    System.out.println("Queued new state with move: " + direction + ", heuristic: " + heuristic + ", total cost: " + newGameState.getEstimatedCost());
+                }
+            }
+        }
+
+        System.out.println("No solution found with A* Search.");
+    }
+
+
 
     public Grid getGrid() {
         return this.grid;
@@ -375,7 +484,6 @@ public class Game {
                 if (cell instanceof ColoredCell) {
                     ColoredCell coloredCell = (ColoredCell) cell;
                     String color = coloredCell.getColor();
-
                     if (seenColors.contains(color)) {
                         return false;
                     }
@@ -442,7 +550,7 @@ public class Game {
     public Game simulateMove(String direction) {
         Grid copiedGrid = this.grid.deepCopy();
         Game simulatedGame = new Game(copiedGrid);
-        simulatedGame.makeMove(direction);
+        simulatedGame.makeMove(direction, true);
         return simulatedGame;
     }
 
