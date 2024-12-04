@@ -1,18 +1,25 @@
 import javax.swing.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.util.HashSet;
-import java.util.Scanner;
-import java.util.Set;
-import java.util.Stack;
-
+import java.util.*;
 
 public class Main {
     public static void main(String[] args) {
-        displaySolveOptions();
+        Grid grid = new Grid(0, 0, new String[0][0]);
+        Game game = new Game(grid);
+        game.initGame();
+
+        while (true) {
+            Game newGame = new Game(game.getGrid().deepCopyFirst());
+            displaySolveOptions(newGame);
+
+            if (newGame.isFinished()) {
+                System.out.println("The game is finished! Redisplay solve options...");
+            }
+        }
     }
 
-    public static void displaySolveOptions() {
+    public static void displaySolveOptions(Game game) {
         Scanner scanner = new Scanner(System.in);
         System.out.println("Choose an option:");
         System.out.println("Press 1 if you want to solve the game by Yourself.");
@@ -22,74 +29,67 @@ public class Main {
         System.out.println("Press 5 if you want the system to solve the game by HillClimbing.");
         System.out.println("Press 6 if you want the system to solve the game by UCS.");
         System.out.println("Press 7 if you want the system to solve the game by A*.");
+        System.out.println("Press 100 to Exit.");
+        System.out.println("------------------------------------------------");
         int choice = scanner.nextInt();
+        switch (choice) {
+            case 1:
+                if (initTheGame(game)) {
+                    return;
+                }
+                break;
+            case 2:
+                game.solveWithDFS();
+                break;
+            case 3:
+                game.solveWithBFS();
+                break;
+            case 4:
+                Stack<Game> stack = new Stack<>();
+                Set<String> visitedStates = new HashSet<>();
+                List<String> currentPath = new ArrayList<>();
+                int counter = 0;
+                int totalSteps = 0;
+                boolean[] foundSolution = {false};
+                long start=0;
+                game.solveWithRecDFS(stack, visitedStates, counter, currentPath, totalSteps, foundSolution,start);
 
-        if (choice == 1) {
-            initTheGame(); // Proceed with the game for the user to solve
-        } else if (choice == 2) {
-            Grid grid = new Grid(0, 0, new String[0][0]); // Initialize an empty grid
-            Game game = new Game(grid);
-            game.initGame();
-            System.out.println("Solving the game using DFS...");
-            game.solveWithDFS();
-        } else if (choice == 3) {
-            Grid grid = new Grid(0, 0, new String[0][0]);
-            Game game = new Game(grid);
-            game.initGame();
-            System.out.println("Solving the game using BFS...");
-            game.solveWithBFS();
-        } else if (choice == 4) {
-            Grid grid = new Grid(0, 0, new String[0][0]);
-            Game game = new Game(grid);
-            game.initGame();
-            System.out.println("Solving the game using RecDFS...");
-            Stack<Game> stack = new Stack<>();
-            Set<String> visitedStates = new HashSet<>();
-            game.solveWithRecDFS(stack, visitedStates, 0);
+                break;
+            case 5:
+                game.solveWithHillClimbing();
+                break;
+            case 6:
+                game.solveWithUCS();
+                break;
+            case 7:
+                game.solveWithAStar();
+                break;
+            case 100:
+                System.out.println("Exiting the program. Goodbye!");
+                System.exit(0);
+                break;
+            default:
+                System.out.println("Invalid choice. Please select a valid option.");
         }
-        if (choice == 5) {
-            System.out.println("Solving the game using HillClimbing...");
-            Grid grid = new Grid(0, 0, new String[0][0]);
-            Game game = new Game(grid);
-            game.initGame();
-            game.solveWithHillClimbing();
-        } if (choice == 6) {
-            System.out.println("Solving the game using UCS...");
-            Grid grid = new Grid(0, 0, new String[0][0]);
-            Game game = new Game(grid);
-            game.initGame();
-            game.solveWithUCS();
-        } if (choice == 7) {
-            System.out.println("Solving the game using A*...");
-            Grid grid = new Grid(0, 0, new String[0][0]);
-            Game game = new Game(grid);
-            game.initGame();
-            game.solveWithAStar();
-        } else {
-            System.out.println("Invalid choice. Please restart and select a valid option.");
+
+        if (game.isFinished()) {
+            System.out.println("Congratulations! The game is finished!");
+            System.out.println("------------------------------------------------");
         }
     }
 
-    public static void initTheGame() {
-        // Create Grid and Game instance
-        Grid grid = new Grid(0, 0, new String[0][0]); // Empty grid for initialization
-        Game game = new Game(grid);
-
-        // Initialize the game
-        game.initGame(); // Let the user input the grid dimensions and configuration
-
-        // Create JFrame to capture key events
+    public static boolean initTheGame(Game game) {
         JFrame frame = new JFrame("Game");
         frame.setSize(400, 400);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        // Add KeyListener to capture arrow keys and other actions
+        boolean[] gameFinished = {false};
+
         frame.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
                 int keyCode = e.getKeyCode();
 
-                // Convert key events to directions and call makeMove
                 switch (keyCode) {
                     case KeyEvent.VK_UP:
                         game.makeMove("up");
@@ -97,41 +97,48 @@ public class Main {
                         break;
                     case KeyEvent.VK_DOWN:
                         game.makeMove("down");
-                        System.out.println("down move");
+                        System.out.println("Down move");
                         break;
                     case KeyEvent.VK_LEFT:
                         game.makeMove("left");
-                        System.out.println("left move");
+                        System.out.println("Left move");
                         break;
                     case KeyEvent.VK_RIGHT:
                         game.makeMove("right");
-                        System.out.println("right move");
-
+                        System.out.println("Right move");
                         break;
-                    case KeyEvent.VK_U: // Press 'U' to undo
+                    case KeyEvent.VK_U:
                         game.undo();
                         System.out.println("Move undone.");
                         break;
-                    case KeyEvent.VK_R: // Press 'R' to reset
-                        System.out.println("Game reset to initial state.");
+                    case KeyEvent.VK_R:
                         game.revertToInitialState();
-                        System.out.println("------------------------------");
+                        System.out.println("Game reset to initial state.");
                         break;
                     default:
                         break;
                 }
 
-                // Print the updated grid after the move or action
                 game.printCurrentGrid();
-                // Display prompt for undo/reset options
-                System.out.println("Press 'U' to undo the last move or 'R' to reset the game.");
-                System.out.println("------------------------------");
+                if (game.isFinished()) {
+                    System.out.println("Congratulations! You've completed the game.");
+                    gameFinished[0] = true;
+                    frame.dispose();
+                }
             }
         });
 
-        // Show the frame
         frame.setVisible(true);
         game.printCurrentGrid();
 
+
+        while (!gameFinished[0]) {
+            try {
+                Thread.sleep(100); // Prevent busy-waiting
+            } catch (InterruptedException ex) {
+                ex.printStackTrace();
+            }
+        }
+        return gameFinished[0];
     }
 }

@@ -8,7 +8,6 @@ public class Game {
     private int numberOfMoves;
     private int estimatedCost;
 
-
     public Game(Grid initialGrid) {
         this.grid = initialGrid;
         this.numberOfMoves = 0;
@@ -29,20 +28,16 @@ public class Game {
 //    public LinkedList<Grid> getGridHistory() {
 //        return this.gridHistory;
 //    }
-
     public void initGame() {
         Scanner scanner = new Scanner(System.in);
 
-        // Step 1: Ask for grid dimensions
         System.out.print("Enter the number of rows: ");
         int rows = scanner.nextInt();
         System.out.print("Enter the number of columns: ");
         int cols = scanner.nextInt();
 
-        // Step 2: Create an empty configuration array based on rows and cols
         String[][] config = new String[rows][cols];
 
-        // Step 3: Ask the user to input the grid configuration row by row
         scanner.nextLine(); // consume the newline after the int input
         for (int i = 0; i < rows; i++) {
             System.out.println("Enter row " + (i + 1) + ": ");
@@ -65,268 +60,358 @@ public class Game {
     public void solveWithDFS() {
         Stack<Game> stack = new Stack<>();
         Set<String> visitedStates = new HashSet<>();
+        List<List<String>> allPaths = new ArrayList<>();
+        List<String> solutionPath = null;
 
         stack.push(this);
         visitedStates.add(getGridHash());
+        allPaths.add(new ArrayList<>());
+
+        int totalSteps = 0;
 
         System.out.println("Starting DFS to solve the game...\n");
-
+        long start = 0;
         while (!stack.isEmpty()) {
+            start = System.nanoTime();
             Game currentGame = stack.pop();
-            System.out.println("Current Depth: " + currentGame.numberOfMoves);
-            System.out.println("Current Grid State:");
-            currentGame.printCurrentGrid(true);
-            System.out.println("------------------------------");
+            List<String> currentPath = allPaths.removeLast();
+
             for (String direction : new String[]{"up", "down", "left", "right"}) {
-                System.out.println("Current Moves In this Depth : " + currentGame.numberOfMoves);
+                totalSteps++;
                 Game newGameState = new Game(currentGame.grid.deepCopy());
                 newGameState.gridHistory.addAll(currentGame.gridHistory);
-
                 newGameState.makeMove(direction, true);
+
                 String newGridHash = newGameState.getGridHash();
+
                 if (!visitedStates.contains(newGridHash)) {
+                    List<String> newPath = new ArrayList<>(currentPath);
+                    newPath.add(direction);
+
                     if (newGameState.isFinished()) {
-                        currentGame.numberOfMoves++;
-                        System.out.println("Attempting move: " + direction);
-                        System.out.println("\nSolution found in depth " + currentGame.numberOfMoves + " !");
+                        long finish = System.nanoTime();
+                        long timeElapsed = finish - start;
+                        solutionPath = newPath;
+                        System.out.println("Solution found!");
+                        System.out.println("Solution Path: " + solutionPath);
+                        System.out.println("Depth (steps in solution path): " + solutionPath.size());
+                        System.out.println("Total Steps Explored: " + totalSteps);
                         newGameState.printCurrentGrid(true);
-                        System.exit(0);
+                        System.out.println("Elapsed Time:" + timeElapsed);
                         return;
                     }
-                    newGameState.numberOfMoves = currentGame.numberOfMoves + 1;
+
                     visitedStates.add(newGridHash);
                     stack.push(newGameState);
-                    System.out.println("Attempting move: " + direction);
-                    newGameState.printCurrentGrid(true);
-                    System.out.println("------------------------------");
-                } else {
-                    System.out.println("Move " + direction + " leads to a previously visited state. Skipping.");
+                    allPaths.add(newPath);
                 }
             }
         }
-
+        long finish = System.nanoTime();
+        long timeElapsed = finish - start;
         System.out.println("No solution found with DFS.");
+        System.out.println("Elapsed Time:" + timeElapsed);
     }
 
-    public void solveWithRecDFS(Stack<Game> stack, Set<String> visitedStates, int counter) {
+    public void solveWithRecDFS(Stack<Game> stack, Set<String> visitedStates, int counter, List<String> currentPath, int totalSteps, boolean[] foundSolution, long start) {
         if (counter == 0) {
+            start = System.nanoTime();
+            System.out.println("Solving the game using RecDFS...");
             stack.push(this);
             visitedStates.add(getGridHash());
             counter++;
         }
-
-        if (stack.isEmpty()) {
-            System.out.println("No solution found with RecDFS.");
-            System.exit(0);
+        if (stack.isEmpty() || foundSolution[0]) {
+            if (!foundSolution[0]) {
+                long finish = System.nanoTime();
+                long timeElapsed = finish - start;
+                System.out.println("No solution found with RecDFS.");
+                System.out.println("Total Steps Explored: " + totalSteps);
+                System.out.println("Elapsed Time:" + timeElapsed);
+            }
+            return;
         }
 
         Game currentGame = stack.pop();
-        System.out.println("Current Depth: " + currentGame.numberOfMoves);
-        System.out.println("Current Grid State:");
-        currentGame.printCurrentGrid(true);
-        System.out.println("------------------------------");
 
         for (String direction : new String[]{"up", "down", "left", "right"}) {
-            System.out.println("Current Moves In this Depth: " + currentGame.numberOfMoves);
+            if (foundSolution[0]) return;
+
+            totalSteps++;
+
             Game newGameState = new Game(currentGame.grid.deepCopy());
             newGameState.gridHistory.addAll(currentGame.gridHistory);
-
             newGameState.makeMove(direction, true);
             String newGridHash = newGameState.getGridHash();
 
             if (!visitedStates.contains(newGridHash)) {
+
+                List<String> newPath = new ArrayList<>(currentPath);
+                newPath.add(direction);
+
+
                 if (newGameState.isFinished()) {
-                    System.out.println("Attempting move: " + direction);
-                    System.out.println("\nSolution found in depth " + (currentGame.numberOfMoves + 1) + "!");
+                    long finish = System.nanoTime();
+                    long timeElapsed = finish - start;
+                    foundSolution[0] = true; // Mark that a solution has been found.
+                    System.out.println("\nSolution found!");
+                    System.out.println("Solution Path: " + newPath); // Show the path to the solution.
+                    System.out.println("Depth (steps in solution path): " + newPath.size()); // Depth (steps in the path).
+                    System.out.println("Total Steps Explored: " + totalSteps); // Total number of steps (all moves attempted).
                     newGameState.printCurrentGrid(true);
-                    System.exit(0);
+                    System.out.println("Elapsed Time:" + timeElapsed);
                     return;
                 }
-                newGameState.numberOfMoves = currentGame.numberOfMoves + 1;
+
+
                 visitedStates.add(newGridHash);
                 stack.push(newGameState);
-                System.out.println("Attempting move: " + direction);
-                newGameState.printCurrentGrid(true);
-                System.out.println("------------------------------");
-            } else {
-                System.out.println("Move " + direction + " leads to a previously visited state. Skipping.");
+                solveWithRecDFS(stack, visitedStates, counter + 1, newPath, totalSteps, foundSolution, start);
             }
         }
-
-        solveWithRecDFS(stack, visitedStates, counter);
     }
 
     public void solveWithBFS() {
         Queue<Game> queue = new LinkedList<>();
+        Queue<List<String>> pathQueue = new LinkedList<>();
         Set<String> visitedStates = new HashSet<>();
 
         queue.add(this);
+        pathQueue.add(new ArrayList<>());
         visitedStates.add(getGridHash());
+
+        int totalSteps = 0;
 
         System.out.println("Starting BFS to solve the game...\n");
 
+        long start = 0;
         while (!queue.isEmpty()) {
+            start = System.nanoTime();
             Game currentGame = queue.poll();
-            System.out.println("Current Depth: " + currentGame.numberOfMoves);
-            System.out.println("Current Grid State:");
-            currentGame.printCurrentGrid(true);
-            System.out.println("------------------------------");
+            List<String> currentPath = pathQueue.poll();
+
             for (String direction : new String[]{"up", "down", "left", "right"}) {
+                totalSteps++;
+
                 Game newGameState = new Game(currentGame.grid.deepCopy());
                 newGameState.gridHistory.addAll(currentGame.gridHistory);
-
                 newGameState.makeMove(direction, true);
-                if (newGameState.isFinished()) {
-                    currentGame.numberOfMoves++;
-                    System.out.println("---------------------------------------------------------------------");
-                    System.out.println("Attempting move: " + direction);
-                    System.out.println("\n Solution found in depth" + currentGame.numberOfMoves + " !");
-                    newGameState.printCurrentGrid(true);
-                    System.exit(0);
-                    return;
-                }
+
                 String newGridHash = newGameState.getGridHash();
 
                 if (!visitedStates.contains(newGridHash)) {
-                    newGameState.numberOfMoves = currentGame.numberOfMoves + 1;
                     visitedStates.add(newGridHash);
+
                     queue.add(newGameState);
-                    System.out.println("Attempting move: " + direction);
+                    List<String> newPath = new ArrayList<>(currentPath);
+                    newPath.add(direction);
+                    pathQueue.add(newPath);
+                }
+                if (newGameState.isFinished()) {
+                    long finish = System.nanoTime();
+                    long timeElapsed = finish - start;
+                    List<String> solutionPath = new ArrayList<>(currentPath);
+                    solutionPath.add(direction);
+                    System.out.println("Solution found!");
+                    System.out.println("Solution Path: " + solutionPath);
+                    System.out.println("Depth (steps in solution path): " + solutionPath.size());
+                    System.out.println("Total Steps Explored: " + totalSteps);
                     newGameState.printCurrentGrid(true);
-                    System.out.println("------------------------------");
-                } else {
-                    System.out.println("Move " + direction + " leads to a previously visited state. Skipping.");
+                    System.out.println("Elapsed Time:" + timeElapsed);
+
+                    return;
                 }
             }
         }
-
+        long finish = System.nanoTime();
+        long timeElapsed = finish - start;
+        System.out.println("Elapsed Time:" + timeElapsed);
         System.out.println("No solution found with BFS.");
+        System.out.println("Total Steps Explored: " + totalSteps);
     }
 
     public void solveWithHillClimbing() {
         System.out.println("Starting Hill Climbing...");
+        long start = 0;
         while (true) {
+            start = System.nanoTime();
             String bestMove = selectBestMove();
             if (bestMove == null) {
                 System.out.println("No better moves available. Stopping.");
                 break;
             }
             String currentGridState = getGridHash();
-            System.out.println("Performing move: " + bestMove);
-            this.makeMove(bestMove);
-            this.printCurrentGrid();
+            System.out.print(bestMove + " ");
+            this.makeMove(bestMove, true);
             String newGridState = getGridHash();
             if (newGridState.equals(currentGridState)) {
                 break;
             }
             if (isFinished()) {
+                long finish = System.nanoTime();
+                long timeElapsed = finish - start;
+                System.out.println();
                 System.out.println("Solution found!");
-                this.printCurrentGrid();
+                System.out.println("Number of moves:" + this.numberOfMoves);
+                this.printCurrentGrid(true);
+                System.out.println("Elapsed Time:" + timeElapsed);
+
                 return;
             }
         }
+        long finish = System.nanoTime();
+        long timeElapsed = finish - start;
+
+        System.out.println();
+        System.out.println("Elapsed Time:" + timeElapsed);
         System.out.println("No solution found with Hill Climbing.");
+        System.out.println("Number of moves:" + this.numberOfMoves);
     }
 
     public void solveWithUCS() {
+        int totalMoves = 0;
+
         PriorityQueue<Game> priorityQueue = new PriorityQueue<>(Comparator.comparingInt(g -> g.numberOfMoves));
-        Set<String> visitedStates = new HashSet<>();
 
+        Map<String, List<String>> pathMap = new HashMap<>(); // Tracks paths for each game state.
+        Set<String> visitedStates = new HashSet<>(); // Tracks visited states to avoid revisiting.
+
+        // Initialize the search.
         priorityQueue.add(this);
+        pathMap.put(this.getGridHash(), new ArrayList<>());
         visitedStates.add(this.getGridHash());
+        this.numberOfMoves = 0;
 
-        System.out.println("Starting Uniform Cost Search...");
-
+        System.out.println("Starting Uniform Cost Search...\n");
+        long start = 0;
         while (!priorityQueue.isEmpty()) {
+            start = System.nanoTime();
             Game currentGame = priorityQueue.poll();
+            List<String> currentPath = pathMap.get(currentGame.getGridHash());
 
-            System.out.println("Exploring state with cost: " + currentGame.numberOfMoves);
-            currentGame.printCurrentGrid();
-
+            // Explore all possible moves.
             for (String direction : new String[]{"up", "down", "left", "right"}) {
+                int moveCost = switch (direction) {
+                    case "up" -> 1;
+                    case "down" -> 2;
+                    case "left" -> 3;
+                    case "right" -> 4;
+                    default -> 0;
+                };
+                totalMoves++;
                 Game newGameState = currentGame.simulateMove(direction);
-
-                // Correctly set the cost for the new state
-                newGameState.numberOfMoves = currentGame.numberOfMoves + 1;
-
-                if (newGameState.isFinished()) {
-                    System.out.println("Attempting move: " + direction);
-                    System.out.println("\nSolution found in " + newGameState.numberOfMoves + " moves!");
-                    newGameState.printCurrentGrid(true);
-                    return; // End the search
-                }
-
                 String newGridHash = newGameState.getGridHash();
 
                 if (!visitedStates.contains(newGridHash)) {
                     visitedStates.add(newGridHash);
+
+                    List<String> newPath = new ArrayList<>(currentPath);
+                    newPath.add(direction);
+                    newGameState.numberOfMoves = currentGame.numberOfMoves + moveCost;
+                    pathMap.put(newGridHash, newPath);
                     priorityQueue.add(newGameState);
-                    System.out.println("Queued new state with move: " + direction);
                 }
+                if (newGameState.isFinished()) {
+                    long finish = System.nanoTime();
+                    long timeElapsed = finish - start;
+                    System.out.println("Solution found!");
+                    System.out.println("Solution Path: " + pathMap.get(newGameState.getGridHash()));
+                    System.out.println("Number of Moves: " + currentPath.size());
+                    System.out.println("Total Cost  : " + (newGameState.numberOfMoves));
+                    System.out.println("Total Moves" + totalMoves);
+                    newGameState.printCurrentGrid(true);
+                    System.out.println("Elapsed Time:" + timeElapsed);
+                    return;
+                }
+
             }
         }
-
+        long finish = System.nanoTime();
+        long timeElapsed = finish - start;
         System.out.println("No solution found with Uniform Cost Search.");
+        System.out.println("Elapsed Time:" + timeElapsed);
     }
 
     public void solveWithAStar() {
-
-//        PriorityQueue<Game> priorityQueue = new PriorityQueue<>(Comparator.comparingInt(g -> g.getEstimatedCost()));
-
+        // Comparator to prioritize based on f(n) = g(n) + h(n), with tie-breaking on h(n)
         Comparator<Game> comparator = (g1, g2) -> {
             int f1 = g1.getEstimatedCost();
             int f2 = g2.getEstimatedCost();
             if (f1 != f2) {
                 return Integer.compare(f1, f2);
             }
-            return Integer.compare(g2.grid.countColoredCells(), g1.grid.countColoredCells());
+            int h1 = g1.grid.countColoredCells();
+            int h2 = g2.grid.countColoredCells();
+            return Integer.compare(h2, h1);
         };
 
         PriorityQueue<Game> priorityQueue = new PriorityQueue<>(comparator);
         Set<String> visitedStates = new HashSet<>();
+        Map<String, List<String>> pathMap = new HashMap<>();
 
         this.setEstimatedCost(this.numberOfMoves + this.grid.countColoredCells());
         priorityQueue.add(this);
         visitedStates.add(this.getGridHash());
+        pathMap.put(this.getGridHash(), new ArrayList<>());
 
-        System.out.println("Starting A* Search with tie-breaking...");
-
+        System.out.println("Starting A* Search ...\n");
+        int totalMoves = 0;
+        long start = 0;
         while (!priorityQueue.isEmpty()) {
+            start = System.nanoTime();
+
+            // Get the state with the lowest cost
             Game currentGame = priorityQueue.poll();
+            List<String> currentPath = pathMap.get(currentGame.getGridHash());
 
-            System.out.println("Exploring state with cost: " + currentGame.numberOfMoves + ", heuristic: " + currentGame.grid.countColoredCells() + ", total: " + currentGame.getEstimatedCost());
-            currentGame.printCurrentGrid();
-
-            if (currentGame.isFinished()) {
-                System.out.println("\n*** Solution found in " + currentGame.numberOfMoves + " moves! ***");
-                currentGame.printCurrentGrid(true);
-                return;
-            }
 
             for (String direction : new String[]{"up", "down", "left", "right"}) {
+                int moveCost = switch (direction) {
+                    case "up" -> 1;
+                    case "down" -> 2;
+                    case "left" -> 3;
+                    case "right" -> 4;
+                    default -> 0;
+                };
+                totalMoves++;
                 Game newGameState = currentGame.simulateMove(direction);
-
-                newGameState.numberOfMoves = currentGame.numberOfMoves + 1;
-
                 String newGridHash = newGameState.getGridHash();
 
                 if (!visitedStates.contains(newGridHash)) {
                     visitedStates.add(newGridHash);
 
                     int heuristic = newGameState.grid.countColoredCells();
-                    newGameState.setEstimatedCost(newGameState.numberOfMoves + heuristic);
+                    newGameState.setEstimatedCost(currentGame.numberOfMoves + moveCost + heuristic);
+                    newGameState.numberOfMoves = currentGame.numberOfMoves + moveCost;
+
+                    List<String> newPath = new ArrayList<>(currentPath);
+                    newPath.add(direction);
+                    pathMap.put(newGridHash, newPath);
 
                     priorityQueue.add(newGameState);
 
-                    System.out.println("Queued new state with move: " + direction + ", heuristic: " + heuristic + ", total cost: " + newGameState.getEstimatedCost());
+                }
+                if (newGameState.isFinished()) {
+                    long finish = System.nanoTime();
+                    //long finish = System.currentTimeMillis();
+                    long timeElapsed = finish - start;
+                    System.out.println("\n*** Solution found! ***");
+                    System.out.println("Solution Path: " + pathMap.get(newGameState.getGridHash()));
+                    System.out.println("Number of Moves: " + currentPath.size());
+                    System.out.println("Total Cost: " + newGameState.numberOfMoves);
+                    System.out.println("Total Moves: " + totalMoves);
+                    newGameState.printCurrentGrid(true);
+                    System.out.println("Elapsed Time:" + timeElapsed);
+                    return;
                 }
             }
         }
-
+        long finish = System.nanoTime();
+        long timeElapsed = finish - start;
         System.out.println("No solution found with A* Search.");
+        System.out.println("Elapsed Time:" + timeElapsed);
+
     }
-
-
 
     public Grid getGrid() {
         return this.grid;
@@ -354,9 +439,6 @@ public class Game {
                 break;
             }
             previousGridState = newGridState;
-        }
-        if (!isSystemPlays) {
-            this.result();
         }
     }
 
